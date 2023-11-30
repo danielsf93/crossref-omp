@@ -2,15 +2,6 @@
 
 /**
  * @file plugins/importexport/crossref/classes/form/CrossRefSettingsForm.inc.php
- *
- * Copyright (c) 2014-2020 Simon Fraser University
- * Copyright (c) 2003-2020 John Willinsky
- * Distributed under the GNU GPL v3. For full terms see the file docs/COPYING.
- *
- * @class CrossRefSettingsForm
- * @ingroup plugins_importexport_crossref
- *
- * @brief Form for journal managers to setup CrossRef plugin
  */
 
 
@@ -130,10 +121,7 @@ class CrossRefSettingsForm extends Form {
 		return array(
 			'depositorName' => 'string',
 			'depositorEmail' => 'string',
-			'username' => 'string',
-			'password' => 'string',
-			'automaticRegistration' => 'bool',
-			'testMode' => 'bool'
+			
 		);
 	}
 

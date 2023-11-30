@@ -1,12 +1,6 @@
 {**
  * plugins/importexport/crossref/templates/settingsForm.tpl
- *
- * Copyright (c) 2014-2020 Simon Fraser University
- * Copyright (c) 2003-2020 John Willinsky
- * Distributed under the GNU GPL v3. For full terms see the file docs/COPYING.
- *
- * Crossref plugin settings
- *
+
  *}
 <script type="text/javascript">
 	$(function() {ldelim}
@@ -16,31 +10,23 @@
 </script>
 <form class="pkp_form" id="crossrefSettingsForm" method="post" action="{url router=$smarty.const.ROUTE_COMPONENT op="manage" plugin="CrossRefExportPlugin" category="importexport" verb="save"}">
 	{csrf}
-	{if $doiPluginSettingsLinkAction}
-		{fbvFormArea id="doiPluginSettingsLink"}
-			{fbvFormSection}
-				{include file="linkAction/linkAction.tpl" action=$doiPluginSettingsLinkAction}
-			{/fbvFormSection}
-		{/fbvFormArea}
-	{/if}
+	
 	{fbvFormArea id="crossrefSettingsFormArea"}
-		<p class="pkp_help">{translate key="plugins.importexport.crossref.settings.depositorIntro"}</p>
+		<div class="pkp_notification">
+		<div class="notifyWarning">
+		<b> {translate key="Plugin de exportação eXML."}</b><br>
+		-Adicione as informações como login e email de depositant crossref.<br>
+		-Selecione a publicação a ser baixada e clique em exportar.<br>
+		-Acesse a <a href="https://doi.crossref.org/servlet/useragent" target="_blank">ferramenta de deposito manual da Crossref </a>para depositar o arquivo xml.
+		<br><br>Se possuir dúvidas sobre a ferramenta, acesse o 
+		<a href="https://www.crossref.org/documentation/register-maintain-records/direct-deposit-xml/admin-tool/" target="_blank"> manual da Crossref </a>
+		</div>
+		</div>
 		{fbvFormSection}
-			{fbvElement type="text" id="depositorName" value=$depositorName required="true" label="plugins.importexport.crossref.settings.form.depositorName" maxlength="60" size=$fbvStyles.size.MEDIUM}
-			{fbvElement type="text" id="depositorEmail" value=$depositorEmail required="true" label="plugins.importexport.crossref.settings.form.depositorEmail" maxlength="90" size=$fbvStyles.size.MEDIUM}
+			{fbvElement type="text" id="depositorName" value=$depositorName required="true" label="Nome de Usuário" maxlength="60" size=$fbvStyles.size.MEDIUM}
+			{fbvElement type="text" id="depositorEmail" value=$depositorEmail required="true" label="Email" maxlength="90" size=$fbvStyles.size.MEDIUM}
 		{/fbvFormSection}
-		{fbvFormSection}
-			<p class="pkp_help">{translate key="plugins.importexport.crossref.registrationIntro"}</p>
-			{fbvElement type="text" id="username" value=$username label="plugins.importexport.crossref.settings.form.username" maxlength="50" size=$fbvStyles.size.MEDIUM}
-			{fbvElement type="text" password="true" id="password" value=$password label="plugins.importexport.common.settings.form.password" maxLength="50" size=$fbvStyles.size.MEDIUM}
-			<span class="instruct">{translate key="plugins.importexport.common.settings.form.password.description"}</span><br/>
-		{/fbvFormSection}
-		{fbvFormSection list="true"}
-			{fbvElement type="checkbox" id="automaticRegistration" label="plugins.importexport.crossref.settings.form.automaticRegistration.description" checked=$automaticRegistration|compare:true}
-		{/fbvFormSection}
-		{fbvFormSection list="true"}
-			{fbvElement type="checkbox" id="testMode" label="plugins.importexport.crossref.settings.form.testMode.description" checked=$testMode|compare:true}
-		{/fbvFormSection}
+		
 	{/fbvFormArea}
 	{fbvFormButtons submitText="common.save"}
 	<p><span class="formRequired">{translate key="common.requiredField"}</span></p>

@@ -2,36 +2,9 @@
 
 /**
  * @file plugins/importexport/crossref/CrossRefExportPlugin.inc.php
- *
- * Copyright (c) 2014-2020 Simon Fraser University
- * Copyright (c) 2003-2020 John Willinsky
- * Distributed under the GNU GPL v3. For full terms see the file docs/COPYING.
- *
- * @class CrossRefExportPlugin
- * @ingroup plugins_importexport_crossref
- *
- * @brief CrossRef/MEDLINE XML metadata export plugin
  */
 
 import('plugins.importexport.crossref.classes.DOIPubIdExportPlugin');
-
-// The status of the Crossref DOI.
-// any, notDeposited, and markedRegistered are reserved
-define('CROSSREF_STATUS_FAILED', 'failed');
-
-define('CROSSREF_API_DEPOSIT_OK', 200);
-
-define('CROSSREF_API_URL', 'https://api.crossref.org/v2/deposits');
-//TESTING
-define('CROSSREF_API_URL_DEV', 'https://test.crossref.org/v2/deposits');
-
-define('CROSSREF_API_STAUTS_URL', 'https://api.crossref.org/servlet/submissionDownload');
-//TESTING
-define('CROSSREF_API_STAUTS_URL_DEV', 'https://test.crossref.org/servlet/submissionDownload');
-
-// The name of the setting used to save the registered DOI and the URL with the deposit status.
-define('CROSSREF_DEPOSIT_STATUS', 'depositStatus');
-
 
 class CrossRefExportPlugin extends DOIPubIdExportPlugin {
 
@@ -64,108 +37,6 @@ class CrossRefExportPlugin extends DOIPubIdExportPlugin {
 	}
 
 	/**
-	 * @copydoc PubObjectsExportPlugin::getStatusNames()
-	 */
-	function getStatusNames() {
-		return array_merge(parent::getStatusNames(), array(
-			EXPORT_STATUS_REGISTERED => __('plugins.importexport.crossref.status.registered'),
-			CROSSREF_STATUS_FAILED => __('plugins.importexport.crossref.status.failed'),
-			EXPORT_STATUS_MARKEDREGISTERED => __('plugins.importexport.crossref.status.markedRegistered'),
-		));
-	}
-
-	/**
-	 * @copydoc PubObjectsExportPlugin::getStatusActions()
-	 */
-	function getStatusActions($pubObject) {
-		$request = Application::get()->getRequest();
-		$dispatcher = $request->getDispatcher();
-		return array(
-			CROSSREF_STATUS_FAILED =>
-				new LinkAction(
-					'failureMessage',
-					new AjaxModal(
-						$dispatcher->url(
-							$request, ROUTE_COMPONENT, null,
-							'grid.settings.plugins.settingsPluginGridHandler',
-							'manage', null, array('plugin' => 'CrossRefExportPlugin', 'category' => 'importexport', 'verb' => 'statusMessage',
-							'batchId' => $pubObject->getData($this->getDepositBatchIdSettingName()), 'articleId' => $pubObject->getId())
-						),
-						__('plugins.importexport.crossref.status.failed'),
-						'failureMessage'
-					),
-					__('plugins.importexport.crossref.status.failed')
-				)
-		);
-	}
-
-	/**
-	 * @copydoc PubObjectsExportPlugin::getStatusMessage()
-	 */
-	function getStatusMessage($request) {
-		// if the failure occured on request and the message was saved
-		// return that message
-		$articleId = $request->getUserVar('articleId');
-		$submissionDao = DAORegistry::getDAO('SubmissionDAO'); /* @var $submissionDao SubmissionDAO */
-		$article = $submissionDao->getByid($articleId);
-		$failedMsg = $article->getData($this->getFailedMsgSettingName());
-		if (!empty($failedMsg)) {
-			return $failedMsg;
-		}
-		// else check the failure message with Crossref, using the API
-		$context = $request->getContext();
-
-		import('lib.pkp.classes.helpers.PKPCurlHelper');
-		$curlCh = PKPCurlHelper::getCurlObject();
-		
-		curl_setopt($curlCh, CURLOPT_RETURNTRANSFER, true);
-		curl_setopt($curlCh, CURLOPT_POST, true);
-		curl_setopt($curlCh, CURLOPT_HEADER, 0);
-
-		// Use a different endpoint for testing and production.
-		$endpoint = ($this->isTestMode($context) ? CROSSREF_API_STAUTS_URL_DEV : CROSSREF_API_STAUTS_URL);
-		curl_setopt($curlCh, CURLOPT_URL, $endpoint);
-		// Set the form post fields
-		$username = $this->getSetting($context->getId(), 'username');
-		$password = $this->getSetting($context->getId(), 'password');
-		$batchId = $request->getUserVar('batchId');
-		$data = array('doi_batch_id' => $batchId, 'type' => 'result', 'usr' => $username, 'pwd' => $password);
-		curl_setopt($curlCh, CURLOPT_POSTFIELDS, $data);
-
-		$response = curl_exec($curlCh);
-
-		if ($response === false) {
-			$result = __('plugins.importexport.common.register.error.mdsError', array('param' => 'No response from server.'));
-		} else {
-			$result = $response;
-		}
-		return $result;
-	}
-
-
-	/**
-	 * @copydoc PubObjectsExportPlugin::getExportActionNames()
-	 */
-	function getExportActionNames() {
-		return array(
-			EXPORT_ACTION_DEPOSIT => __('plugins.importexport.crossref.action.register'),
-			EXPORT_ACTION_EXPORT => __('plugins.importexport.crossref.action.export'),
-			EXPORT_ACTION_MARKREGISTERED => __('plugins.importexport.crossref.action.markRegistered'),
-		);
-	}
-
-	/**
-	 * Get a list of additional setting names that should be stored with the objects.
-	 * @return array
-	 */
-	protected function _getObjectAdditionalSettings() {
-		return array_merge(parent::_getObjectAdditionalSettings(), array(
-			$this->getDepositBatchIdSettingName(),
-			$this->getFailedMsgSettingName(),
-		));
-	}
-
-	/**
 	 * @copydoc ImportExportPlugin::getPluginSettingsPrefix()
 	 */
 	function getPluginSettingsPrefix() {
@@ -184,84 +55,6 @@ class CrossRefExportPlugin extends DOIPubIdExportPlugin {
 	 */
 	function getExportDeploymentClassName() {
 		return 'CrossrefExportDeployment';
-	}
-
-	/**
-	 * @copydoc PubObjectsExportPlugin::executeExportAction()
-	 */
-	function executeExportAction($request, $objects, $filter, $tab, $objectsFileNamePart, $noValidation = null) {
-		$context = $request->getContext();
-		$path = array('plugin', $this->getName());
-
-		import('lib.pkp.classes.file.FileManager');
-		$fileManager = new FileManager();
-		$resultErrors = array();
-
-		if ($request->getUserVar(EXPORT_ACTION_DEPOSIT)) {
-			assert($filter != null);
-			// Errors occured will be accessible via the status link
-			// thus do not display all errors notifications (for every article),
-			// just one general.
-			// Warnings occured when the registration was successfull will however be
-			// displayed for each article.
-			$errorsOccured = false;
-			// The new Crossref deposit API expects one request per object.
-			// On contrary the export supports bulk/batch object export, thus
-			// also the filter expects an array of objects.
-			// Thus the foreach loop, but every object will be in an one item array for
-			// the export and filter to work.
-			foreach ($objects as $object) {
-				// Get the XML
-				$exportXml = $this->exportXML(array($object), $filter, $context, $noValidation);
-				// Write the XML to a file.
-				// export file name example: crossref-20160723-160036-articles-1-1.xml
-				$objectsFileNamePart = $objectsFileNamePart . '-' . $object->getId();
-				$exportFileName = $this->getExportFileName($this->getExportPath(), $objectsFileNamePart, $context, '.xml');
-				$fileManager->writeFile($exportFileName, $exportXml);
-				// Deposit the XML file.
-				$result = $this->depositXML($object, $context, $exportFileName);
-				if (!$result) {
-					$errorsOccured = true;
-				}
-				if (is_array($result)) {
-					$resultErrors[] = $result;
-				}
-				// Remove all temporary files.
-				$fileManager->deleteByPath($exportFileName);
-			}
-			// send notifications
-			if (empty($resultErrors)) {
-				if ($errorsOccured) {
-					$this->_sendNotification(
-						$request->getUser(),
-						'plugins.importexport.crossref.register.error.mdsError',
-						NOTIFICATION_TYPE_ERROR
-					);
-				} else {
-					$this->_sendNotification(
-						$request->getUser(),
-						$this->getDepositSuccessNotificationMessageKey(),
-						NOTIFICATION_TYPE_SUCCESS
-					);
-				}
-			} else {
-				foreach($resultErrors as $errors) {
-					foreach ($errors as $error) {
-						assert(is_array($error) && count($error) >= 1);
-						$this->_sendNotification(
-							$request->getUser(),
-							$error[0],
-							NOTIFICATION_TYPE_ERROR,
-							(isset($error[1]) ? $error[1] : null)
-						);
-					}
-				}
-			}
-			// redirect back to the right tab
-			$request->redirect(null, null, null, $path, null, $tab);
-		} else {
-			parent::executeExportAction($request, $objects, $filter, $tab, $objectsFileNamePart, $noValidation);
-		}
 	}
 
 	/**
@@ -350,64 +143,6 @@ class CrossRefExportPlugin extends DOIPubIdExportPlugin {
 		return $result;
 	}
 
-	/**
-	 * Check the CrossRef APIs, if deposits and registration have been successful
-	 * @param $context Context
-	 * @param $object The object getting deposited
-	 * @param $status CROSSREF_STATUS_...
-	 * @param $batchId string
-	 * @param $failedMsg string (opitonal)
-	 */
-	function updateDepositStatus($context, $object, $status, $batchId, $failedMsg = null) {
-		assert(is_a($object, 'Submission') or is_a($object, 'Issue'));
-		// remove the old failure message, if exists
-		$object->setData($this->getFailedMsgSettingName(), null);
-		$object->setData($this->getDepositStatusSettingName(), $status);
-		$object->setData($this->getDepositBatchIdSettingName(), $batchId);
-		if ($failedMsg) {
-			$object->setData($this->getFailedMsgSettingName(), $failedMsg);
-		}
-		if ($status == EXPORT_STATUS_REGISTERED) {
-			// Save the DOI -- the object will be updated
-			$this->saveRegisteredDoi($context, $object);
-		}
-	}
-
-	/**
-	 * @copydoc DOIPubIdExportPlugin::markRegistered()
-	 */
-	function markRegistered($context, $objects) {
-		foreach ($objects as $object) {
-			// remove the old failure message, if exists
-			$object->setData($this->getFailedMsgSettingName(), null);
-			$object->setData($this->getDepositStatusSettingName(), EXPORT_STATUS_MARKEDREGISTERED);
-			$this->saveRegisteredDoi($context, $object);
-		}
-	}
-
-	/**
-	 * Get request failed message setting name.
-	 * @return string
-	 */
-	function getFailedMsgSettingName() {
-		return $this->getPluginSettingsPrefix().'::failedMsg';
-	}
-
-	/**
-	 * Get deposit batch ID setting name.
-	 * @return string
-	 */
-	function getDepositBatchIdSettingName() {
-		return $this->getPluginSettingsPrefix().'::batchId';
-	}
-
-	/**
-	 * @copydoc PubObjectsExportPlugin::getDepositSuccessNotificationMessageKey()
-	 */
-	function getDepositSuccessNotificationMessageKey() {
-		return 'plugins.importexport.common.register.success';
-	}
-
 
  /** 
 	 * BASEADO EM ONIX, INICIO
@@ -419,176 +154,311 @@ class CrossRefExportPlugin extends DOIPubIdExportPlugin {
 	 * @param $args array
 	 * @param $request PKPRequest
 	 */
-	function display($args, $request) {
-		$templateMgr = TemplateManager::getManager($request);
-		$context = $request->getContext();
+	public function display($args, $request)
+    {
+        $templateMgr = TemplateManager::getManager($request);
+        $context = $request->getContext();
 
-		parent::display($args, $request);
+        parent::display($args, $request);
 
-		$templateMgr->assign('plugin', $this);
+        $templateMgr->assign('plugin', $this);
 
-		switch (array_shift($args)) {
-			case 'index':
-			case '':
-				$apiUrl = $request->getDispatcher()->url($request, ROUTE_API, $context->getPath(), 'submissions');
-				$submissionsListPanel = new \APP\components\listPanels\SubmissionsListPanel(
-					'submissions',
-					__('common.publications'),
-					[
-						'apiUrl' => $apiUrl,
-						'count' => 100,
-						'getParams' => new stdClass(),
-						'lazyLoad' => true,
-					]
-				);
-				$submissionsConfig = $submissionsListPanel->getConfig();
-				$submissionsConfig['addUrl'] = '';
-				$submissionsConfig['filters'] = array_slice($submissionsConfig['filters'], 1);
-				$templateMgr->setState([
-					'components' => [
-						'submissions' => $submissionsConfig,
-					],
-				]);
-				$templateMgr->assign([
-					'pageComponent' => 'ImportExportPage',
-				]);
-				$templateMgr->display($this->getTemplateResource('index.tpl'));
-				break;
-			case 'export':
-				$exportXml = $this->exportSubmissions(
-					(array) $request->getUserVar('selectedSubmissions'),
-					$request->getContext(),
-					$request->getUser()
-				);
-				import('lib.pkp.classes.file.FileManager');
-				$fileManager = new FileManager();
-				$exportFileName = $this->getExportFileName($this->getExportPath(), 'monographs', $context, '.xml');
-				$fileManager->writeFile($exportFileName, $exportXml);
-				$fileManager->downloadByPath($exportFileName);
-				$fileManager->deleteByPath($exportFileName);
-				break;
-			default:
-				$dispatcher = $request->getDispatcher();
-				$dispatcher->handle404();
-		}
-	}
+        switch (array_shift($args)) {
+            //aqui monta a página do plugin
+            case 'index':
+            case '':
+                $apiUrl = $request->getDispatcher()->url($request, ROUTE_API, $context->getPath(), 'submissions');
+                $submissionsListPanel = new \APP\components\listPanels\SubmissionsListPanel(
+                    'submissions',
+                    __('common.publications'),
+                    [
+                        'apiUrl' => $apiUrl,
+                        'count' => 100,
+                        'getParams' => new stdClass(),
+                        'lazyLoad' => true,
+                    ]
+                );
+                $submissionsConfig = $submissionsListPanel->getConfig();
+                $submissionsConfig['addUrl'] = '';
+                $submissionsConfig['filters'] = array_slice($submissionsConfig['filters'], 1);
+                $templateMgr->setState([
+                    'components' => [
+                        'submissions' => $submissionsConfig,
+                    ],
+                ]);
+                $templateMgr->assign([
+                    'pageComponent' => 'ImportExportPage',
+                ]);
+                $templateMgr->display($this->getTemplateResource('index.tpl'));
+                break;
+                //aqui exporta o livro
+                case 'export':
+					$exportXml = $this->exportSubmissions(
+						(array) $request->getUserVar('selectedSubmissions'),
+						$request->getContext(),
+						$request->getUser(),
+						$request,
+						$request->getUserVar('depositorName'),
+						$request->getUserVar('depositorEmail')
+					);
+                    import('lib.pkp.classes.file.FileManager');
+                    $fileManager = new FileManager();
+                    //'monographs' aparece no nome do arquivo .xml
+                    $exportFileName = $this->getExportFileName($this->getExportPath(), 'monographs', $context, '.xml');
+                    $fileManager->writeFile($exportFileName, $exportXml);
+                    $fileManager->downloadByPath($exportFileName);
+                    $fileManager->deleteByPath($exportFileName);
+                    break;
 
-	/**
-	 * Get the XML for a set of submissions.
-	 * @param $submissionIds array Array of submission IDs
-	 * @param $context Context
-	 * @param $user User
-	 * @return string XML contents representing the supplied submission IDs.
-	 */
-	function exportSubmissions($submissionIds, $context, $user) {
-		$submissionDao = DAORegistry::getDAO('SubmissionDAO'); /* @var $submissionDao SubmissionDAO */
-		$xml = '';
-		$filterDao = DAORegistry::getDAO('FilterDAO'); /* @var $filterDao FilterDAO */
-		$nativeExportFilters = $filterDao->getObjectsByGroup('monographs=>onix30-xml');
-		assert(count($nativeExportFilters) == 1); // Assert only a single serialization filter
-		$exportFilter = array_shift($nativeExportFilters);
-		$exportFilter->setDeployment(new Onix30ExportDeployment($context, $user));
-		$submissions = array();
-		foreach ($submissionIds as $submissionId) {
-			$submission = $submissionDao->getById($submissionId, $context->getId());
-			if ($submission) $submissions[] = $submission;
-		}
-		$submissionXml = $exportFilter->execute($submissions);
-		if ($submissionXml) $xml = $submissionXml->saveXml();
-		else fatalError('Could not convert submissions.');
-		return $xml;
-	}
+            default:
+                $dispatcher = $request->getDispatcher();
+                $dispatcher->handle404();
+        }
+    }
 
-
-
-
-
-	/**
-	 * @copydoc ImportExportPlugin::executeCLI($scriptName, $args)
-	 */
-	function executeCLI($scriptName, &$args) {
-		fatalError('Not implemented.');
-	}
-
-
-
+	
 
    /** 
-	 * BASEADO EM ONIX, FINAL
+	 * FORMAÇÃO DO ARQUIVO XML
 	 * 
 	 */
 
 
 
 
+	 public function exportSubmissions($submissionIds, $context, $user, $request, $depositorName, $depositorEmail)
+    {
+        $submissionDao = DAORegistry::getDAO('SubmissionDAO'); /* @var $submissionDao SubmissionDAO */
+        $submissions = [];
+        $app = new Application();
+        $request = $app->getRequest();
+        $press = $request->getContext();
 
-	/**
-	 * @copydoc PKPImportExportPlugin::executeCLI()
-	 */
-	function executeCLICommand($scriptName, $command, $context, $outputFile, $objects, $filter, $objectsFileNamePart) {
-		switch ($command) {
-			case 'export':
-				PluginRegistry::loadCategory('generic', true, $context->getId());
-				$exportXml = $this->exportXML($objects, $filter, $context);
-				if ($outputFile) file_put_contents($outputFile, $exportXml);
-				break;
-			case 'register':
-				PluginRegistry::loadCategory('generic', true, $context->getId());
-				import('lib.pkp.classes.file.FileManager');
-				$fileManager = new FileManager();
-				$resultErrors = array();
-				// Errors occured will be accessible via the status link
-				// thus do not display all errors notifications (for every article),
-				// just one general.
-				// Warnings occured when the registration was successfull will however be
-				// displayed for each article.
-				$errorsOccured = false;
-				// The new Crossref deposit API expects one request per object.
-				// On contrary the export supports bulk/batch object export, thus
-				// also the filter expects an array of objects.
-				// Thus the foreach loop, but every object will be in an one item array for
-				// the export and filter to work.
-				foreach ($objects as $object) {
-					// Get the XML
-					$exportXml = $this->exportXML(array($object), $filter, $context);
-					// Write the XML to a file.
-					// export file name example: crossref-20160723-160036-articles-1-1.xml
-					$objectsFileNamePartId = $objectsFileNamePart . '-' . $object->getId();
-					$exportFileName = $this->getExportFileName($this->getExportPath(), $objectsFileNamePartId, $context, '.xml');
-					$fileManager->writeFile($exportFileName, $exportXml);
-					// Deposit the XML file.
-					$result = $this->depositXML($object, $context, $exportFileName);
-					if (!$result) {
-						$errorsOccured = true;
-					}
-					if (is_array($result)) {
-						$resultErrors[] = $result;
-					}
-					// Remove all temporary files.
-					$fileManager->deleteByPath($exportFileName);
-				}
-				// display deposit result status messages
-				if (empty($resultErrors)) {
-					if ($errorsOccured) {
-						echo __('plugins.importexport.crossref.register.error.mdsError') . "\n";
-					} else {
-						echo __('plugins.importexport.common.register.success') . "\n";
-					}
-				} else {
-					echo __('plugins.importexport.common.cliError') . "\n";
-					foreach($resultErrors as $errors) {
-						foreach ($errors as $error) {
-							assert(is_array($error) && count($error) >= 1);
-							$errorMessage = __($error[0], array('param' => (isset($error[1]) ? $error[1] : null)));
-							echo "*** $errorMessage\n";
-						}
-					}
-					echo "\n";
-					$this->usage($scriptName);
-				}
-				break;
-		}
-	}
+        /********************************************		FOREACH'S	********************************************/
+        foreach ($submissionIds as $submissionId) {
+            $submission = $submissionDao->getById($submissionId, $context->getId());
+            if ($submission) {
+                $submissions[] = $submission;
+            }
+        }
+        $authorsInfo = [];
+        $authors = $submission->getAuthors();
+
+        foreach ($authors as $author) {
+            $authorInfo = [
+        'givenName' => $author->getLocalizedGivenName(),
+        'surname' => $author->getLocalizedFamilyName(),
+        'afiliation' => $author->getLocalizedAffiliation(),
+        'orcid' => $author->getOrcid(),
+    ];
+            $authorsInfo[] = $authorInfo;
+        }
+
+        foreach ($submissions as $submission) {
+            // Obtendo o título da submissão
+            $submissionTitle = $submission->getLocalizedFullTitle();
+            //obtendo o tipo de conteudo, capitulo e monografia. crossref só aceita "edited_book, monograph, reference, other" porém ao iniciar uma nova publicação, só há entrada para 'monograph' e 'other'
+            $types = [1 => 'other', 2 => 'monograph', 3 => 'other', 4 => 'other'];
+            $type = $submission->getWorkType();
+
+            $abstract = $submission->getLocalizedAbstract();
+            $doi = $submission->getStoredPubId('doi');
+            $publicationUrl = $request->url($context->getPath(), 'catalog', 'book', [$submission->getId()]);
+            $copyright = $submission->getLocalizedcopyrightHolder();
+            // aqui retorna ano mes dia $publicationYear = $submission->getDatePublished();
+            $publicationDate = $submission->getDatePublished();
+            $publicationYear = date('Y', strtotime($publicationDate));
+            $publicationMonth = date('m', strtotime($publicationDate));
+            $publicationDay = date('d', strtotime($publicationDate));
+            //timestamp
+            $timestamp = date('YmdHis').substr((string) microtime(), 2, 3);
+
+            // aqui retorna xx_XX (pt-BR ou en_US etc) sendo o idioma em que a publicação foi submetida
+            $submissionLanguage = substr($submission->getLocale(), 0, 2); //aqui retorna xx
+            $publisherName = $press->getData('publisher');
+            $registrant = $press->getLocalizedName();
+
+            // Obtendo dados dos autores
+            $authorNames = [];
+            $authors = $submission->getAuthors();
+            foreach ($authors as $author) {
+                $givenName = $author->getLocalizedGivenName();
+                $surname = $author->getLocalizedFamilyName();
+                $afiliation = $author->getLocalizedAffiliation();
+                $authorNames[] = $givenName.' '.$surname;
+            }
+            $authorName = implode(', ', $authorNames);
+            $orcid = $author->getOrcid();
+
+            $isbn = '';
+            $publicationFormats = $submission->getCurrentPublication()->getData('publicationFormats');
+            foreach ($publicationFormats as $publicationFormat) {
+                $identificationCodes = $publicationFormat->getIdentificationCodes();
+                while ($identificationCode = $identificationCodes->next()) {
+                    if ($identificationCode->getCode() == '02' || $identificationCode->getCode() == '15') {
+                        // 02 e 15: códigos ONIX para ISBN-10 ou ISBN-13
+                        $isbn = $identificationCode->getValue();
+                        break; // Encerra o loop ao encontrar o ISBN
+                    }
+                }
+            }
+
+            /*
+             *
+             * ESTRUTURA XML
+             *
+             * */
+
+            //---início estrutura xml codigos obrigatórios
+            $xmlContent = '<?xml version="1.0" encoding="UTF-8"?>
+		<doi_batch version="4.4.2" xmlns="http://www.crossref.org/schema/4.4.2" 
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+		xmlns:jats="http://www.ncbi.nlm.nih.gov/JATS1" 
+		xsi:schemaLocation="http://www.crossref.org/schema/4.4.2 http://www.crossref.org/schema/deposit/crossref4.4.2.xsd">';
+
+            //$xmlContent .= '<TESTE>'.$xablau.'</TESTE>';//tag para testes
+
+            $xmlContent .= '<head>';
+            //segundo documentação, doi_batch_id pode ser o proprio nome da publicação: https://www.crossref.org/documentation/register-maintain-records/verify-your-registration/submission-queue-and-log/
+            $xmlContent .= '<doi_batch_id>'.htmlspecialchars($submissionTitle).'</doi_batch_id>';
+            $xmlContent .= '<timestamp>'.$timestamp.'</timestamp>';
+            $xmlContent .= '<depositor>';
+            //por hora em hardcoding - buscando solução para obter info via form de depositor e email
+            $xmlContent .= '<depositor_name>' . (!empty($depositorName) ? htmlspecialchars($depositorName) : 'não encontrado') . '</depositor_name>';
+$xmlContent .= '<email_address>' . (!empty($depositorEmail) ? htmlspecialchars($depositorEmail) : 'não encontrado') . '</email_address>';
+            $xmlContent .= '</depositor>';
+            $xmlContent .= '<registrant>WEB-FORM</registrant>';
+            $xmlContent .= '</head>';
+
+            $xmlContent .= '<body>';
+            $xmlContent .= '<book book_type="'.htmlspecialchars($types[$type]).'">';
+            $xmlContent .= '<book_metadata>';
+
+            $xmlContent .= '<contributors>';
+
+            //AUTORES:
+            // Primeiro autor - obrigatório
+            $firstAuthor = reset($authorsInfo);
+            if (!empty($authorInfo['afiliation'])) {
+                $xmlContent .= '<organization sequence="additional" contributor_role="author">'.htmlspecialchars($authorInfo['afiliation']).'</organization>';
+            }
+            $xmlContent .= '<person_name sequence="first" contributor_role="author">';
+            $xmlContent .= '<given_name>'.htmlspecialchars($firstAuthor['givenName']).'</given_name>';
+            $xmlContent .= '<surname>'.htmlspecialchars($firstAuthor['surname']).'</surname>';
+            if (!empty($authorInfo['orcid'])) {
+                $xmlContent .= '<ORCID>'.htmlspecialchars($authorInfo['orcid']).'</ORCID>';
+            }
+            $xmlContent .= '</person_name>';
+            // Autores adicionais
+            foreach ($authorsInfo as $index => $authorInfo) {
+                if ($index > 0) {
+                    $xmlContent .= '<person_name sequence="additional" contributor_role="author">';
+                    $xmlContent .= '<given_name>'.htmlspecialchars($authorInfo['givenName']).'</given_name>';
+                    $xmlContent .= '<surname>'.htmlspecialchars($authorInfo['surname']).'</surname>';
+                    if (!empty($authorInfo['orcid'])) {
+                        $xmlContent .= '<ORCID>'.htmlspecialchars($authorInfo['orcid']).'</ORCID>';
+                    }
+                    $xmlContent .= '</person_name>';
+                    if (!empty($authorInfo['afiliation'])) {
+                        $xmlContent .= '<organization sequence="additional" contributor_role="author">'.htmlspecialchars($authorInfo['afiliation']).'</organization>';
+                    }
+                }
+            }
+            $xmlContent .= '</contributors>';
+
+            //dados do livro
+            $xmlContent .= '<titles>';
+            $xmlContent .= '<title>'.htmlspecialchars($submissionTitle).'</title>';
+            $xmlContent .= '</titles>';
+            $xmlContent .= '<jats:abstract xml:lang="'.htmlspecialchars($submissionLanguage).'">';
+            $xmlContent .= '<jats:p>'.htmlspecialchars($abstract).'</jats:p>';
+            $xmlContent .= '</jats:abstract>';
+            $xmlContent .= '<publication_date media_type="online">';
+            $xmlContent .= '<month>'.htmlspecialchars($publicationMonth).'</month>';
+            $xmlContent .= '<day>'.htmlspecialchars($publicationDay).'</day>';
+            $xmlContent .= '<year>'.htmlspecialchars($publicationYear).'</year>';
+            $xmlContent .= '</publication_date>';
+
+            $xmlContent .= '<isbn>'.htmlspecialchars($isbn).'</isbn>';
+
+            $xmlContent .= '<publisher>';
+            //como no modelo, publisher é o detentor do copyright
+            $xmlContent .= '<publisher_name>'.htmlspecialchars($copyright).'</publisher_name>';
+            $xmlContent .= '</publisher>';
+            $xmlContent .= '<doi_data>';
+            $xmlContent .= '<doi>'.htmlspecialchars($doi).'</doi>';
+            $xmlContent .= '<resource>'.htmlspecialchars($publicationUrl).'</resource>';
+            $xmlContent .= '</doi_data>';
+            $xmlContent .= '</book_metadata>';
+            $xmlContent .= '</book>';
+            $xmlContent .= '</body>';
+            $xmlContent .= '</doi_batch>';
+        }
+
+        return $xmlContent;
+    }
+
+
+
+/**
+ * FIM DA FORMAÇÃO DO ARQUIVO XML
+ * 
+ */
+
+
+	public function executeCLI($scriptName, &$args)
+    {
+        $opts = $this->parseOpts($args, ['no-embed', 'use-file-urls']);
+        $command = array_shift($args);
+        $xmlFile = array_shift($args);
+        $pressPath = array_shift($args);
+
+        AppLocale::requireComponents(LOCALE_COMPONENT_APP_MANAGER, LOCALE_COMPONENT_PKP_MANAGER, LOCALE_COMPONENT_PKP_SUBMISSION);
+        $pressDao = DAORegistry::getDAO('PressDAO');
+        $userDao = DAORegistry::getDAO('UserDAO');
+        $press = $pressDao->getByPath($pressPath);
+
+        if (!$press) {
+            if ($pressPath != '') {
+                echo __('plugins.importexport.common.cliError')."\n";
+                echo __('plugins.importexport.common.error.unknownPress', ['pressPath' => $pressPath])."\n\n";
+            }
+            $this->usage($scriptName);
+
+            return;
+        }
+
+        if ($xmlFile && $this->isRelativePath($xmlFile)) {
+            $xmlFile = PWD.'/'.$xmlFile;
+        }
+
+        switch ($command) {
+            case 'export':
+                $outputDir = dirname($xmlFile);
+                if (!is_writable($outputDir) || (file_exists($xmlFile) && !is_writable($xmlFile))) {
+                    echo __('plugins.importexport.common.cliError')."\n";
+                    echo __('plugins.importexport.common.export.error.outputFileNotWritable', ['param' => $xmlFile])."\n\n";
+                    $this->usage($scriptName);
+
+                    return;
+                }
+
+                if ($xmlFile != '') {
+                    switch (array_shift($args)) {
+                        case 'monograph':
+                        case 'monographs':
+                            $selectedSubmissions = array_slice($args, 1);
+                            $xmlContent = $this->exportSubmissions($selectedSubmissions);
+                            file_put_contents($xmlFile, $xmlContent);
+
+                            return;
+                    }
+                }
+                break;
+        }
+        $this->usage($scriptName);
+    }
+
 }
 
 
