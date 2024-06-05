@@ -13,86 +13,82 @@ msgstr ""
 
 
 msgid "plugins.importexport.crossref.displayName"
-msgstr "Plugin XML Crossref"
+msgstr "Crossref XML -lisäosa"
 
 msgid "plugins.importexport.crossref.description"
-msgstr "Deposite livros no formato XML Crossref do OMP."
+msgstr "Tallenna OMP-järjestelmässä muodostettuja DOI-tunnuksia Crossref-palveluun."
 
 msgid "plugins.importexport.crossref.deposited"
-msgstr "Depositado"
+msgstr "Tallennettu"
 
 msgid "plugins.importexport.crossref.depositedSubmissions"
-msgstr "Envios depositados"
+msgstr "Tallennetut käsikirjoitukset"
 
 msgid "plugins.importexport.crossref.deposit"
-msgstr "Depositar"
+msgstr "Tallenna"
 
 msgid "plugins.importexport.crossref.export"
-msgstr "Exportar"
+msgstr "Vie tiedostoon"
 
 msgid "plugins.importexport.crossref.error"
-msgstr "Erro"
+msgstr "Virhe"
 
 msgid "plugins.importexport.crossref.queued"
-msgstr "A depositar"
+msgstr "Tallentamatta"
 
 msgid "plugins.importexport.crossref.redeposit"
-msgstr "Depositar Novamente"
+msgstr "Tallenna uudelleen"
 
 msgid "plugins.importexport.crossref.submittedSubmissions"
-msgstr "Selecionar monografias para exportar"
+msgstr "Valitse teokset"
 
 msgid "plugins.importexport.crossref.results"
-msgstr "Resultados"
+msgstr "Tulokset"
 
 msgid "plugins.importexport.crossref.settings.description"
-msgstr "Descrição"
+msgstr "Kuvaus"
 
 msgid "plugins.importexport.crossref.intro"
-msgstr "Este plugin registra DOIs para monografias e capítulos para o provedor de DOIs <a href='https://crossref.org'>Crossref.org</a>."
+msgstr "Tämä lisäosa tallentaa DOI-tunnuksia teoksille ja luvuille <a href='https://crossref.org'>Crossref.org</a>-palveluun."
 
 msgid "plugins.importexport.crossref.settings"
-msgstr "Configurações"
+msgstr "Asetukset"
 
 msgid "plugins.importexport.crossref.settings.form.password"
-msgstr "Senha"
+msgstr "Salasana"
 
 msgid "plugins.importexport.crossref.settings.form.password.description"
 msgstr ""
 
 msgid "plugins.importexport.crossref.settings.form.username"
-msgstr "Nome de usuário Crossref"
+msgstr "Käyttäjänimi"
 
 msgid "plugins.importexport.crossref.settings.form.usernameRequired"
-msgstr "Por favor, insira o nome de usuário fornecido pelo Crossref."
+msgstr "Anna Crossrefilta saatu käyttäjänimi."
 
 msgid "plugins.importexport.crossref.settings.form.testMode.description"
-msgstr "Usar a API de teste da Crossref para o registro de DOIs. Não se esqueça de remover esta opção para a produção."
+msgstr "Käytä Crossref-testirajapintaa. Muista poistaa tämä asetus tuotantokäytössä."
 
 msgid "plugins.importexport.crossref.senderTask.name"
-msgstr "Tarefa de registro automático Crossref"
+msgstr "Crossref automatic registration task"
 
 msgid "plugins.importexport.crossref.register.error.mdsError"
-msgstr "O registro não foi totalmente bem-sucedido! O servidor de registro de DOIs retornou um erro."
+msgstr "Rekisteröinti ei onnistunut! Palvelin palautti virheen."
 
 msgid "plugins.importexport.crossref.register.success"
-msgstr "Registro bem-sucedido!"
+msgstr "Rekisteröinti onnistui!"
 
 msgid "plugins.importexport.crossref.chapterDoiCount"
-msgstr "DOIs de Capítulos"
+msgstr "Lukujen DOIt"
 
 msgid "plugins.importexport.crossref.notice.noIsbn"
-msgstr "Nota! Nenhum ISBN disponível. A exportação para o Crossref usará a seleção 'noisbn'."
+msgstr "Huom! Ei ISBN-tunnusta. Viennissä käytetään 'noisbn'-valintaa."
 
 msgid "plugins.importexport.crossref.displayName"
-msgstr "Plugin XML Crossref"
+msgstr "Crossref XML -lisäosa"
 
 msgid "plugins.importexport.crossref.monographsOrChapter"
-msgstr "Monografias / Capítulos"
+msgstr "Teokset / Luvut"
 
 msgid "plugins.importexport.crossref.cliUsage"
 msgstr "<![CDATA[Usage: {$scriptName} {$pluginName} export [outputFileName] [journal_path] {issues|articles|galleys} objectId1 [objectId2] ... {$scriptName} {$pluginName} register [journal_path] {issues|articles|galleys} objectId1 [objectId2] ...]]>"
-
-msgid "plugins.importexport.crossref.error.noIssn"
-msgstr "A Série não possui ISSN, mas não afetará nada no depósito e/ou exportação"
-

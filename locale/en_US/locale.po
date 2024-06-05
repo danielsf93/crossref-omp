@@ -13,86 +13,82 @@ msgstr ""
 
 
 msgid "plugins.importexport.crossref.displayName"
-msgstr "Plugin XML Crossref"
+msgstr "Crossref XML Plugin"
 
 msgid "plugins.importexport.crossref.description"
-msgstr "Deposite livros no formato XML Crossref do OMP."
+msgstr "Deposite submissions in OMP's crossref XML format."
 
 msgid "plugins.importexport.crossref.deposited"
-msgstr "Depositado"
+msgstr "Deposited"
 
 msgid "plugins.importexport.crossref.depositedSubmissions"
-msgstr "Envios depositados"
+msgstr "Deposited submissions"
 
 msgid "plugins.importexport.crossref.deposit"
-msgstr "Depositar"
+msgstr "Deposit"
 
 msgid "plugins.importexport.crossref.export"
-msgstr "Exportar"
+msgstr "Export"
 
 msgid "plugins.importexport.crossref.error"
-msgstr "Erro"
+msgstr "Error"
 
 msgid "plugins.importexport.crossref.queued"
-msgstr "A depositar"
+msgstr "To Deposit"
 
 msgid "plugins.importexport.crossref.redeposit"
-msgstr "Depositar Novamente"
+msgstr "Deposit Again"
 
 msgid "plugins.importexport.crossref.submittedSubmissions"
-msgstr "Selecionar monografias para exportar"
+msgstr "Select monographs to export"
 
 msgid "plugins.importexport.crossref.results"
-msgstr "Resultados"
+msgstr "Results"
 
 msgid "plugins.importexport.crossref.settings.description"
-msgstr "Descrição"
+msgstr "Description"
 
 msgid "plugins.importexport.crossref.intro"
-msgstr "Este plugin registra DOIs para monografias e capítulos para o provedor de DOIs <a href='https://crossref.org'>Crossref.org</a>."
+msgstr "This plugin registers DOIs for monographs and chapters  for DOI provider <a href='https://crossref.org'>Crossref.org</a>."
 
 msgid "plugins.importexport.crossref.settings"
-msgstr "Configurações"
+msgstr "Settings"
 
 msgid "plugins.importexport.crossref.settings.form.password"
-msgstr "Senha"
+msgstr "Password"
 
 msgid "plugins.importexport.crossref.settings.form.password.description"
 msgstr ""
 
 msgid "plugins.importexport.crossref.settings.form.username"
-msgstr "Nome de usuário Crossref"
+msgstr "Crossref username"
 
 msgid "plugins.importexport.crossref.settings.form.usernameRequired"
-msgstr "Por favor, insira o nome de usuário fornecido pelo Crossref."
+msgstr "Please enter the username you got from Crossref."
 
 msgid "plugins.importexport.crossref.settings.form.testMode.description"
-msgstr "Usar a API de teste da Crossref para o registro de DOIs. Não se esqueça de remover esta opção para a produção."
+msgstr "Use the Crossref test API for DOI registration. Please do not forget to remove this option for the production."
 
 msgid "plugins.importexport.crossref.senderTask.name"
-msgstr "Tarefa de registro automático Crossref"
+msgstr "Crossref automatic registration task"
 
 msgid "plugins.importexport.crossref.register.error.mdsError"
-msgstr "O registro não foi totalmente bem-sucedido! O servidor de registro de DOIs retornou um erro."
+msgstr "Registration was not fully successful! The DOI registration server returned an error."
 
 msgid "plugins.importexport.crossref.register.success"
-msgstr "Registro bem-sucedido!"
+msgstr "Registration was successful!"
 
 msgid "plugins.importexport.crossref.chapterDoiCount"
-msgstr "DOIs de Capítulos"
+msgstr "Chapter DOIs"
 
 msgid "plugins.importexport.crossref.notice.noIsbn"
-msgstr "Nota! Nenhum ISBN disponível. A exportação para o Crossref usará a seleção 'noisbn'."
+msgstr "Note! No ISBN available. Crossref export will use 'noisbn' selection."
 
 msgid "plugins.importexport.crossref.displayName"
-msgstr "Plugin XML Crossref"
+msgstr "Crossref XML Plugin"
 
 msgid "plugins.importexport.crossref.monographsOrChapter"
-msgstr "Monografias / Capítulos"
+msgstr "Monographs / Chapters"
 
 msgid "plugins.importexport.crossref.cliUsage"
 msgstr "<![CDATA[Usage: {$scriptName} {$pluginName} export [outputFileName] [journal_path] {issues|articles|galleys} objectId1 [objectId2] ... {$scriptName} {$pluginName} register [journal_path] {issues|articles|galleys} objectId1 [objectId2] ...]]>"
-
-msgid "plugins.importexport.crossref.error.noIssn"
-msgstr "A Série não possui ISSN, mas não afetará nada no depósito e/ou exportação"
-
