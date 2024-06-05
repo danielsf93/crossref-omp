@@ -1,5 +1,5 @@
 # crossref-omp
+Open Monograph Press 3.3.0.8<br>
 
 Adaptação do plugin de exportação crossref para Open monograph press. <br>
-Pendencia:<br>
--não está repassando ao arquivo xml os valores de $depositorName e $depositorEmail, restante está ok
+É necessário fazer deposito manual dos arquivos xml no site da Crossref.
